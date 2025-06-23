@@ -30,8 +30,8 @@ A free Supabase account with a project created.
 2. Clone the Repository:
 
 Bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/RohiniMaram13/Task-Manager.git
+cd Task-Manager
 3. Create a Virtual Environment:
 
 Bash
@@ -71,16 +71,4 @@ The application will open automatically in your web browser.
 
 
 
-
-
-
-
-
-
-
-Video
-
-Deep Research
-
-Canvas
 
