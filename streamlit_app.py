@@ -63,7 +63,7 @@ with st.sidebar:
 
     if st.session_state.confirming_deactivate_user:
         user_to_deactivate = st.session_state.confirming_deactivate_user
-        st.error(f"Are you sure you want to deactivate {user_to_deactivate}? Their tasks will become unassigned.", icon="⚠️")
+        st.error(f"Are you sure you want to deactivate {user_to_deactivate}?", icon="⚠️")
         col1_del, col2_del = st.columns(2)
         if col1_del.button("YES, DEACTIVATE", use_container_width=True):
             st.session_state.task_manager.deactivate_user(user_to_deactivate)
@@ -77,33 +77,65 @@ with st.sidebar:
 all_tasks_raw = st.session_state.task_manager.get_all_tasks()
 active_team_members = st.session_state.task_manager.team_members
 
-# --- Team Workload & Progress Section ---
-st.header("Active Team Workload & Progress", divider="rainbow")
+# --- Dashboard Section ---
+st.header("Project Dashboard", divider="rainbow")
 
-# --- THIS IS THE FIX ---
-# Filter tasks to only include those assigned to active users or that are unassigned
-tasks_for_graph = [
-    task for task in all_tasks_raw 
-    if (task.get('assigned_to') in active_team_members) or (task.get('assigned_to') is None)
-]
-
-if not tasks_for_graph:
-    st.info("No tasks for the active team to display on the dashboard.")
+if not all_tasks_raw:
+    st.info("No tasks in the system yet. Add a task to see the dashboard.")
 else:
-    df = pd.DataFrame(tasks_for_graph)
-    if 'assigned_to' in df.columns and 'status' in df.columns:
-        # Fill None values for unassigned tasks so they can be grouped
-        df['assigned_to'].fillna('Unassigned', inplace=True)
-        workload_crosstab = pd.crosstab(df['assigned_to'], df['status'])
-        STATUS_COLOR_MAP = {"Completed": "#28a745", "Pending": "#ffc107"}
-        chart_colors = [STATUS_COLOR_MAP[col] for col in workload_crosstab.columns if col in STATUS_COLOR_MAP]
-        st.bar_chart(workload_crosstab, color=chart_colors)
+    df = pd.DataFrame(all_tasks_raw)
+    
+    col1_chart, col2_chart = st.columns(2)
+
+    with col1_chart:
+        st.subheader("Overall Task Status")
+        if 'status' in df.columns:
+            status_counts = df['status'].value_counts().reset_index()
+            status_counts.columns = ['Status', 'Count']
+            
+            fig_pie = px.pie(
+                status_counts, 
+                names='Status', 
+                values='Count', 
+                title='Pending vs. Completed',
+                color='Status',
+                color_discrete_map={'Pending':'#FFD966', 'Completed':'#28a745'}
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
+
+    with col2_chart:
+        st.subheader("Active Team Workload by Priority")
+        
+        # --- THIS IS THE CORRECTED GRAPH LOGIC ---
+        tasks_for_graph = [
+            task for task in all_tasks_raw 
+            if task.get('status') == 'Pending' and 
+               ((task.get('assigned_to') in active_team_members) or (task.get('assigned_to') is None))
+        ]
+        
+        if not tasks_for_graph:
+            st.info("No pending tasks for the active team.")
+        else:
+            df_pending = pd.DataFrame(tasks_for_graph)
+            if 'assigned_to' in df_pending.columns and 'priority' in df_pending.columns:
+                df_pending['assigned_to'].fillna('Unassigned', inplace=True)
+                workload_crosstab = pd.crosstab(df_pending['assigned_to'], df_pending['priority'])
+                
+                # Reorder columns to High, Medium, Low for a logical display
+                priority_order = [p for p in ["High", "Medium", "Low"] if p in workload_crosstab.columns]
+                workload_crosstab = workload_crosstab[priority_order]
+
+                PRIORITY_COLOR_MAP = {"High": "#0D0564", "Medium": "#3F4BD1", "Low": "#6B97FF"}
+                chart_colors = [PRIORITY_COLOR_MAP[col] for col in workload_crosstab.columns if col in PRIORITY_COLOR_MAP]
+                
+                st.bar_chart(workload_crosstab, color=chart_colors)
+
 
 # --- Tabs for Different Views ---
 card_view_tab, timeline_view_tab, completed_tab = st.tabs(["📇 Task Board", "🗓️ Team Timeline", "✅ Completed Tasks"])
 
-
 with card_view_tab:
+    # ... (code for this tab is the same)
     st.header("Pending Tasks")
     filter_priority = st.radio("Filter by Priority:", options=["All", "High", "Medium", "Low"], horizontal=True)
     
