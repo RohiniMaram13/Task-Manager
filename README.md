@@ -8,9 +8,9 @@ Full Task Management (CRUD): Users can Create, Read (view), Update (edit), and D
 Team Management: Simple interface to add new team members or deactivate existing ones.
 Multiple Views:
 📇 Task Board: A card-based view of all pending tasks.
-🗓️ Team Timeline: A Gantt-style chart to visualize task schedules and assignments.
-✅ Completed History: A log of all completed tasks, with the ability to clear the history.
-Dynamic Filtering: Filter the task board by priority (High, Medium, Low).
+🗓️ Team Timeline: A Gantt-style chart to visualize task schedules and assignments.  
+✅ Completed History: A log of all completed tasks, with the ability to clear the history.  
+Dynamic Filtering: Filter the task board by priority (High, Medium, Low).  
 
 
 
