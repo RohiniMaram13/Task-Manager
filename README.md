@@ -5,9 +5,9 @@ An interactive, database-powered project management dashboard built with Streaml
 Interactive Dashboard: At-a-glance view of the team's workload and progress with dynamic charts.  
 Persistent Cloud Database: All data is saved permanently using a Supabase (PostgreSQL) backend. No data is lost when the app is closed.  
 Full Task Management (CRUD): Users can Create, Read (view), Update (edit), and Delete tasks.  
-Team Management: Simple interface to add new team members or deactivate existing ones.
-Multiple Views:
-📇 Task Board: A card-based view of all pending tasks.
+Team Management: Simple interface to add new team members or deactivate existing ones.  
+Multiple Views:  
+📇 Task Board: A card-based view of all pending tasks.  
 🗓️ Team Timeline: A Gantt-style chart to visualize task schedules and assignments.  
 ✅ Completed History: A log of all completed tasks, with the ability to clear the history.  
 Dynamic Filtering: Filter the task board by priority (High, Medium, Low).  
