@@ -6,11 +6,14 @@ import pandas as pd
 import plotly.express as px
 
 # --- SETUP ---
+# This correctly points to the folder containing your AI-generated code.
 project_path = os.path.join(os.getcwd(), 'workspace', 'task_manager', 'task_manager')
 sys.path.append(project_path)
 from task_manager import TaskManager
 
 # --- Initialize Session State ---
+# This ensures our TaskManager is created only once per session.
+# It now connects to Supabase using your secret keys.
 if 'task_manager' not in st.session_state:
     try:
         st.session_state.task_manager = TaskManager(
@@ -21,6 +24,7 @@ if 'task_manager' not in st.session_state:
         st.error(f"Could not connect to the database. Please check your Supabase credentials in secrets.toml. Error: {e}")
         st.stop()
 
+# Use the task ID for editing now, not the title
 if 'editing_task_id' not in st.session_state:
     st.session_state.editing_task_id = None
 if 'confirming_deactivate_user' not in st.session_state:
@@ -32,45 +36,52 @@ st.set_page_config(layout="wide", page_title="Team Task Manager")
 # --- Main Application UI ---
 st.title("✅ Team Task Manager")
 
-# --- Sidebar ---
+# --- Sidebar for User Management ---
 with st.sidebar:
     st.title("User Controls")
     team_member_list = st.session_state.task_manager.team_members
-    current_user = st.selectbox("Select Your User Profile", team_member_list)
-    st.info(f"You are logged in as: **{current_user}**")
+    
+    # Check if team_member_list is not empty before creating selectbox
+    if team_member_list:
+        current_user = st.selectbox("Select Your User Profile", team_member_list)
+        st.info(f"You are logged in as: **{current_user}**")
+    else:
+        st.warning("No active users found.")
     
     st.title("Manage Team")
-    with st.expander("Add New User"):
-        new_user_name = st.text_input("New User Name", key="new_user_input")
-        if st.button("Add User"):
+    
+    with st.expander("Add / Reactivate User"):
+        new_user_name = st.text_input("User Name", key="new_user_input")
+        if st.button("Add / Reactivate User"):
             if new_user_name:
                 if st.session_state.task_manager.add_user(new_user_name):
-                    st.success(f"User '{new_user_name}' added!")
+                    st.success(f"User '{new_user_name}' is now active!")
                     st.rerun() 
                 else:
-                    st.warning(f"User '{new_user_name}' already exists.")
+                    st.error("An error occurred. User could not be added.")
             else:
                 st.warning("Please enter a user name.")
     
     with st.expander("Deactivate User"):
-        if len(team_member_list) > 1:
-            user_to_deactivate = st.selectbox("Select User to Deactivate", [name for name in team_member_list if name != 'Unassigned'])
+        if team_member_list:
+            user_to_deactivate = st.selectbox("Select User to Deactivate", team_member_list)
             if st.button("Deactivate User", type="primary"):
                 st.session_state.confirming_deactivate_user = user_to_deactivate
                 st.rerun()
         else:
-            st.warning("Cannot deactivate the last user.")
+            st.info("No active users to deactivate.")
 
+    # Confirmation dialog logic for deactivating a user
     if st.session_state.confirming_deactivate_user:
         user_to_deactivate = st.session_state.confirming_deactivate_user
-        st.error(f"Are you sure you want to deactivate {user_to_deactivate}?", icon="⚠️")
+        st.error(f"Are you sure you want to deactivate {user_to_deactivate}? Their name will remain on completed tasks.", icon="⚠️")
         col1_del, col2_del = st.columns(2)
         if col1_del.button("YES, DEACTIVATE", use_container_width=True):
             st.session_state.task_manager.deactivate_user(user_to_deactivate)
-            st.session_state.confirming_deactivate_user = None
+            st.session_state.confirming_deactivate_user = None # Clear confirmation
             st.rerun()
-        if col2_del.button("Cancel", use_container_width=True):
-            st.session_state.confirming_deactivate_user = None
+        if col2_del.button("Cancel Deactivation", use_container_width=True):
+            st.session_state.confirming_deactivate_user = None # Clear confirmation
             st.rerun()
 
 # --- Data Loading ---
@@ -85,6 +96,7 @@ if not all_tasks_raw:
 else:
     df = pd.DataFrame(all_tasks_raw)
     
+    # Create two columns for the charts
     col1_chart, col2_chart = st.columns(2)
 
     with col1_chart:
@@ -106,7 +118,6 @@ else:
     with col2_chart:
         st.subheader("Active Team Workload by Priority")
         
-        # --- THIS IS THE CORRECTED GRAPH LOGIC ---
         tasks_for_graph = [
             task for task in all_tasks_raw 
             if task.get('status') == 'Pending' and 
@@ -121,11 +132,10 @@ else:
                 df_pending['assigned_to'].fillna('Unassigned', inplace=True)
                 workload_crosstab = pd.crosstab(df_pending['assigned_to'], df_pending['priority'])
                 
-                # Reorder columns to High, Medium, Low for a logical display
                 priority_order = [p for p in ["High", "Medium", "Low"] if p in workload_crosstab.columns]
                 workload_crosstab = workload_crosstab[priority_order]
 
-                PRIORITY_COLOR_MAP = {"High": "#0D0564", "Medium": "#3F4BD1", "Low": "#6B97FF"}
+                PRIORITY_COLOR_MAP = {"High": "#FF6B6B", "Medium": "#FFD966", "Low": "#6BCBFF"}
                 chart_colors = [PRIORITY_COLOR_MAP[col] for col in workload_crosstab.columns if col in PRIORITY_COLOR_MAP]
                 
                 st.bar_chart(workload_crosstab, color=chart_colors)
@@ -135,7 +145,6 @@ else:
 card_view_tab, timeline_view_tab, completed_tab = st.tabs(["📇 Task Board", "🗓️ Team Timeline", "✅ Completed Tasks"])
 
 with card_view_tab:
-    # ... (code for this tab is the same)
     st.header("Pending Tasks")
     filter_priority = st.radio("Filter by Priority:", options=["All", "High", "Medium", "Low"], horizontal=True)
     
@@ -159,7 +168,9 @@ with card_view_tab:
                         new_title = st.text_input("Title", value=task.get('title'))
                         new_details = st.text_area("Details", value=task.get('details'))
                         new_priority = st.selectbox("Priority", options=["High", "Medium", "Low"], index=["High", "Medium", "Low"].index(task.get('priority')))
-                        new_assignee = st.selectbox("Assign To", options=team_member_list, index=team_member_list.index(task.get('assigned_to')))
+                        # Check if assigned_to is in the list before finding index
+                        assignee_index = team_member_list.index(task.get('assigned_to')) if task.get('assigned_to') in team_member_list else 0
+                        new_assignee = st.selectbox("Assign To", options=team_member_list, index=assignee_index)
                         
                         col_save, col_cancel = st.columns(2)
                         if col_save.form_submit_button("Save", use_container_width=True, type="primary"):
