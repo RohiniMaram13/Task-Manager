@@ -2,9 +2,9 @@
 An interactive, database-powered project management dashboard built with Streamlit and Python. This application allows teams to manage their work through a clean, modern user interface with features for task management, user administration, and data visualization.
 
 ✨ Features
-Interactive Dashboard: At-a-glance view of the team's workload and progress with dynamic charts.
-Persistent Cloud Database: All data is saved permanently using a Supabase (PostgreSQL) backend. No data is lost when the app is closed.
-Full Task Management (CRUD): Users can Create, Read (view), Update (edit), and Delete tasks.
+Interactive Dashboard: At-a-glance view of the team's workload and progress with dynamic charts.  
+Persistent Cloud Database: All data is saved permanently using a Supabase (PostgreSQL) backend. No data is lost when the app is closed.  
+Full Task Management (CRUD): Users can Create, Read (view), Update (edit), and Delete tasks.  
 Team Management: Simple interface to add new team members or deactivate existing ones.
 Multiple Views:
 📇 Task Board: A card-based view of all pending tasks.
